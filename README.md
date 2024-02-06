@@ -5,23 +5,12 @@ You are provided with a dataset concerning high tides in Venice. These data are 
 
 <h4>Input Variables</h4>  
 There are 37 input variables, most of which are self explanatory, consisting of measurements from the different stations of the quantities below.<br> 
-1. Astronomical_Tide+6, the astronomical tide level exactly six hours following the time of the observation (see note on tide below)<br>
-2. Average_Tide_Level<br>
-3. Average_Wind_Direction, measured in degrees<br>
-4. Average_Wind_Speed<br>
-5. Max_Wind_Speed<br>
-6. Humidity<br>
-7. Solar_Radiation<br>
-8. Air_Temperature<br>
-9. Water_Temperature<br>
-10. Pressure<br>
-11. Significant_Wave_Height, the average height of the 33% highest waves<br>
-12. Max_Wave_Height<br>
-13. Rain_Level<br>
+Astronomical_Tide+6, Average_Tide_Level, Average_Wind_Direction, measured in degrees, Average_Wind_Speed, Max_Wind_Speed, Humidity, etc...<br>
 
-<h4>(Links here!)</h4>  
-- Problem Description: [https://github.com/sparksomip/project1/blob/main/Problem-Details.pdf]<br>
-- Train Data Set: [https://github.com/sparksomip/project1/blob/main/train.csv]<br>
-- Test Data Set: [https://github.com/sparksomip/project1/blob/main/test.csv]<br>
-- Weight Calculation Method: [https://github.com/sparksomip/project1/blob/main/test.csv]<br>
-- Result Submitted: [https://github.com/sparksomip/project1/blob/main/FInal%20Submission%20of%20Spam%20Detection_Forecast.txt]<br>
+<h4>(Links here!)</h4>
+<h4>- 📝 **FINAL REPORT:** [https://github.com/sparksomip/project2/blob/main/FinalReport.docx]<br></h4>
+- Problem Description: [https://github.com/sparksomip/project2/blob/main/High%20Water%20Challenge%20Details.pdf]<br>
+- Train Data Set: [https://github.com/sparksomip/project2/blob/main/train.csv]<br>
+- Test Data Set: [https://github.com/sparksomip/project2/blob/main/test.csv]<br>
+- Weight Calculation: [https://github.com/sparksomip/project2/blob/main/weights-matrix.csv]<br>
+- Result Submitted: [https://github.com/sparksomip/project2/blob/main/FInalSubmissionofHighWaterForecast.txt]
