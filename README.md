@@ -1,5 +1,7 @@
 # Project 2
 <h3>High Water Project</h3>
+<h4>📖 Field: Machine Learning, Prediction of high tide using the past observed data</h4>
+<h4>⚡Key words: Machine Learning, Decision Tree, Prediction</h4>
 
 You are provided with a dataset concerning high tides in Venice. These data are used by the “Centro Previsioni e Segnalazioni Maree” to produce forecasts of high tide. The data comprises information gathered from a number of Venetian meteorological station. Each station tracks different kinds of information, depending on the sensors that have been installed. The training dataset consists of 1000 measurements (taken at different times) of input variables that can be used to predict high tide. Note that the observations are not ordered in time. For these observations you know whether the phenomenon of high tide was observed exactly 6 hours following the observation (y = 2) or not (y = 1). For the additional 866 measurements in the test set, you only have the inputs. Your goal is to predict y for the held–out 866 unit in the test set.
 
