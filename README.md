@@ -9,6 +9,8 @@ Astronomical_Tide+6, Average_Tide_Level, Average_Wind_Direction, measured in deg
 
 <h4>(Links here!)</h4>
 <h4>- 📝 **FINAL REPORT:** [https://github.com/sparksomip/project2/blob/main/FinalReport.pdf]</h4>
+<h4>- 📝 **FINAL CODE:** [https://github.com/sparksomip/project2/blob/main/HighWater_Code.Rmd]</h4>
+
 - Problem Description: [https://github.com/sparksomip/project2/blob/main/High%20Water%20Challenge%20Details.pdf]<br>
 - Train Data Set: [https://github.com/sparksomip/project2/blob/main/train.csv]<br>
 - Test Data Set: [https://github.com/sparksomip/project2/blob/main/test.csv]<br>
