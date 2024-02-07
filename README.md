@@ -8,8 +8,8 @@ There are 37 input variables, most of which are self explanatory, consisting of 
 Astronomical_Tide+6, Average_Tide_Level, Average_Wind_Direction, measured in degrees, Average_Wind_Speed, Max_Wind_Speed, Humidity, etc...<br>
 
 <h4>(Links here!)</h4>
-<h4>- 📝 **FINAL REPORT:** [https://github.com/sparksomip/project2/blob/main/FinalReport.pdf]</h4>
-<h4>- 📝 **FINAL CODE:** [https://github.com/sparksomip/project2/blob/main/HighWater_Code.Rmd]</h4>
+<h4> 📝 **FINAL REPORT:** [https://github.com/sparksomip/project2/blob/main/FinalReport.pdf]</h4>
+<h4> 📝 **FINAL CODE:** [https://github.com/sparksomip/project2/blob/main/HighWater_Code.Rmd]</h4>
 
 - Problem Description: [https://github.com/sparksomip/project2/blob/main/High%20Water%20Challenge%20Details.pdf]<br>
 - Train Data Set: [https://github.com/sparksomip/project2/blob/main/train.csv]<br>
