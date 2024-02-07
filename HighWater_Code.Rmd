@@ -1,0 +1,263 @@
+---
+title: "Final Data Challenge"
+author: "So Mi"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r cars}
+library(ISLR2)
+library(ggplot2)
+library(mice)
+library(Amelia)
+library(Rcpp)
+library(caret)
+```
+
+```{r pressure, echo=FALSE}
+train <- read.csv("~/R/Machine Learning/Data Challenge 3/train.csv")
+test <- read.csv("~/R/Machine Learning/Data Challenge 3/test.csv")
+```
+
+```{r eval=FALSE, include=FALSE}
+## Average Tide Level
+plot(train_x$Piattaforma_CNR_Max_Wind_Speed[5:10], type = "l", col = "red", xlab = "Rows", ylab = "Average Wind Speed")
+lines(train_x$Faro_Diga_Lido_Max_Wind_Speed[5:10], col = "blue")
+lines(train_x$San_Giorgio_Max_Wind_Speed[5:10], col = "green")
+lines(train_x$Misericordia_Max_Wind_Speed[5:10], col = "yellow")
+legend("topright", legend = c("Piattaforma", "Lido", "San Giorgio","Misericordia"), col = c("red", "blue", "green","yellow"), lty = 1)
+```
+
+```{r eval=FALSE, include=FALSE}
+## Plot of average wind speed
+par(mfrow=c(2,2))
+plot(train$Piattaforma_CNR_Average_Wind_Speed, y)
+plot(train$Faro_Diga_Lido_Average_Wind_Speed, y)
+plot(train$San_Giorgio_Average_Wind_Speed, y)
+plot(train$Misericordia_Average_Wind_Speed, y)
+```
+```{r}
+train_x <- train
+```
+
+```{r}
+## Imputation of missing values
+mice_imputed <- data.frame(
+  sg_avgwinddir_imputed_cart = complete(mice(train_x, method = "cart"))$San_Giorgio_Average_Wind_Direction,
+  sg_avgwindspd_imputed_lasso = complete(mice(train_x, method = "lasso.norm"))$San_Giorgio_Average_Wind_Speed,
+  sg_maxwindspd_imputed_lasso = complete(mice(train_x, method = "lasso.norm"))$San_Giorgio_Max_Wind_Speed,
+  sg_humid_imputed_cart = complete(mice(train_x, method = "cart"))$San_Giorgio_Humidity,
+  Piatta_solar_imputed_cart = complete(mice(train_x, method = "cart"))$Piattaforma_CNR_Solar_Radiation,
+  sg_solar_SG_imputed_cart = complete(mice(train_x, method = "cart"))$San_Giorgio_Solar_Radiation,
+  Palazzo_solar_imputed_cart = complete(mice(train_x, method = "cart"))$Palazzo_Cavalli_Solar_Radiation,
+  sg_Airtemp_Palazzo_imputed_cart = complete(mice(train_x, method = "cart"))$San_Giorgio_Air_Temperature
+)
+```
+
+```{r}
+train_x['San_Giorgio_Average_Wind_Direction'] <- mice_imputed['sg_avgwinddir_imputed_cart']
+train_x['San_Giorgio_Average_Wind_Speed'] <- mice_imputed['sg_avgwindspd_imputed_lasso']
+train_x['San_Giorgio_Max_Wind_Speed'] <- mice_imputed['sg_maxwindspd_imputed_lasso']
+train_x['San_Giorgio_Humidity'] <- mice_imputed['sg_humid_imputed_cart']
+train_x['Piattaforma_CNR_Solar_Radiation'] <- mice_imputed['Piatta_solar_imputed_cart']
+train_x['San_Giorgio_Solar_Radiation'] <- mice_imputed['sg_solar_SG_imputed_cart']
+train_x['Palazzo_Cavalli_Solar_Radiation'] <- mice_imputed['Palazzo_solar_imputed_cart']
+train_x['San_Giorgio_Air_Temperature'] <- mice_imputed['sg_Airtemp_Palazzo_imputed_cart']
+```
+
+```{r eval=FALSE, include=FALSE}
+selected_cols <- c("Piattaforma_CNR_Average_Tide_Level","DS_Lido_Average_Tide_Level","P_Salute_Average_Tide_Level","Misericordia_Average_Tide_Level","Burano_Average_Tide_Level")
+subset_data <- train_x[, selected_cols]
+subset_data
+# Calculate the correlation matrix between the selected columns
+cor_matrix <- cor(subset_data)
+
+# Show the correlation matrix
+cor_matrix
+
+write.table(cor_matrix,file="cormatrix.csv", row.names=FALSE, col.names=FALSE)
+```
+
+## Treat Circular data
+
+```{r}
+train_x$Faro_Diga_Lido_Average_Wind_Direction <- train_x$Faro_Diga_Lido_Average_Wind_Direction / 180 * pi
+train_x$Misericordia_Average_Wind_Direction <- train_x$Misericordia_Average_Wind_Direction / 180 * pi
+train_x$San_Giorgio_Average_Wind_Direction <- train_x$San_Giorgio_Average_Wind_Direction / 180 * pi
+train_x$Piattaforma_CNR_Average_Wind_Direction <- train_x$Piattaforma_CNR_Average_Wind_Direction / 180 * pi
+```
+
+```{r}
+# Create a new data frame with the selected columns
+train_x_selected <- train_x[, -(8:11)]
+
+# Normalize the data
+process <- preProcess(as.data.frame(train_x_selected), method=c("range"))
+trainx_norm_scale_selected <- predict(process, as.data.frame(train_x_selected))
+
+# Merge the normalized columns back into the original data frame
+train_x_norm <- cbind(trainx_norm_scale_selected, train_x[,8:11])
+```
+
+## Cross-validation
+
+```{r}
+## Cross-validation
+set.seed(1)
+cv_train_x <- trainControl(method="repeatedcv", number = 10, allowParallel=TRUE)
+```
+
+## Model 0: Single Classification Tree
+
+```{r}
+train_x.tree_cv <- train(as.factor(y) ~ ., 
+                   data=train_x_norm,
+                   method="ctree",
+                   trControl=cv_train_x,
+                   tuneLength = 10)
+train_x.tree_cv
+```
+
+```{r}
+plot(train_x.tree_cv)
+plot(train_x.tree_cv$finalModel,main="Regression Tree")
+```
+
+```{r}
+tree.classTrain <-  predict(train_x.tree_cv, type="raw")
+train_x_norm$y <- factor(train_x_norm$y, levels=levels(tree.classTrain))
+confusionMatrix(train_x_norm$y,tree.classTrain)
+```
+
+## Model 1: Bagging of ctrees
+
+```{r}
+train_x.bagg_cv <- train(as.factor(y) ~ ., 
+                   data=train_x_norm,
+                   method="treebag",
+                   trControl=cv_train_x,
+                   importance=TRUE)
+
+train_x.bagg_cv
+```
+
+```{r}
+plot(varImp(train_x.bagg_cv))
+```
+
+```{r}
+bagg.classTrain <-  predict(train_x.bagg_cv, type="raw")
+confusionMatrix(train_x_norm$y,bagg.classTrain)
+```
+
+## Model 2: Random Forest for classification trees
+
+```{r}
+train_x.rf_cv <- train(as.factor(y) ~ ., 
+                  data=train_x_norm,
+                  method="rf",
+                  trControl=cv_train_x,
+                  importance=TRUE)
+train_x.rf_cv
+```
+
+```{r}
+rf.classTrain <-  predict(train_x.rf_cv, type="raw")
+confusionMatrix(train_x_norm$y,rf.classTrain)
+```
+
+## Model 3: Random Forest with Boosting
+
+```{r}
+train_x.gbm <- train(as.factor(y) ~ ., 
+                   data=train_x_norm,
+                   method="gbm",
+                   verbose=F,
+                   trControl=cv_train_x)
+train_x.gbm
+```
+
+```{r}
+gbm.classTrain <-  predict(train_x.gbm, type="raw")
+confusionMatrix(train_x_norm$y,gbm.classTrain)
+```
+
+## Test data cleansing
+```{r}
+mice_imputed_test <- data.frame(
+  sg_avgwinddir_imputed_cart_test = complete(mice(test, method = "cart"))$San_Giorgio_Average_Wind_Direction,
+  sg_avgwindspd_imputed_lasso_test = complete(mice(test, method = "lasso.norm"))$San_Giorgio_Average_Wind_Speed,
+  sg_maxwindspd_imputed_lasso_test = complete(mice(test, method = "lasso.norm"))$San_Giorgio_Max_Wind_Speed,
+  sg_humid_imputed_cart_test = complete(mice(test, method = "cart"))$San_Giorgio_Humidity,
+  Piatta_solar_imputed_cart_test = complete(mice(test, method = "cart"))$Piattaforma_CNR_Solar_Radiation,
+  sg_solar_SG_imputed_cart_test = complete(mice(test, method = "cart"))$San_Giorgio_Solar_Radiation,
+  Palazzo_solar_imputed_cart_test = complete(mice(test, method = "cart"))$Palazzo_Cavalli_Solar_Radiation,
+  sg_Airtemp_Palazzo_imputed_cart_test = complete(mice(test, method = "cart"))$San_Giorgio_Air_Temperature
+)
+```
+
+```{r}
+test['San_Giorgio_Average_Wind_Direction'] <- mice_imputed_test['sg_avgwinddir_imputed_cart_test']
+test['San_Giorgio_Average_Wind_Speed'] <- mice_imputed_test['sg_avgwindspd_imputed_lasso_test']
+test['San_Giorgio_Max_Wind_Speed'] <- mice_imputed_test['sg_maxwindspd_imputed_lasso_test']
+test['San_Giorgio_Humidity'] <- mice_imputed_test['sg_humid_imputed_cart_test']
+test['Piattaforma_CNR_Solar_Radiation'] <- mice_imputed_test['Piatta_solar_imputed_cart_test']
+test['San_Giorgio_Solar_Radiation'] <- mice_imputed_test['sg_solar_SG_imputed_cart_test']
+test['Palazzo_Cavalli_Solar_Radiation'] <- mice_imputed_test['Palazzo_solar_imputed_cart_test']
+test['San_Giorgio_Air_Temperature'] <- mice_imputed_test['sg_Airtemp_Palazzo_imputed_cart_test']
+```
+
+## TEST DATASET: Treat Circular data
+
+```{r}
+test$Faro_Diga_Lido_Average_Wind_Direction <- test$Faro_Diga_Lido_Average_Wind_Direction / 180 * pi
+test$Misericordia_Average_Wind_Direction <- test$Misericordia_Average_Wind_Direction / 180 * pi
+test$San_Giorgio_Average_Wind_Direction <- test$San_Giorgio_Average_Wind_Direction / 180 * pi
+test$Piattaforma_CNR_Average_Wind_Direction <- test$Piattaforma_CNR_Average_Wind_Direction / 180 * pi
+```
+
+```{r}
+# Create a new data frame with the selected columns
+test_selected <- test[, -(8:11)]
+
+# Normalize the data
+processtest <- preProcess(as.data.frame(test_selected), method=c("range"))
+test_norm_scale_selected <- predict(processtest, as.data.frame(test_selected))
+
+# Merge the normalized columns back into the original data frame
+test_norm <- cbind(test_norm_scale_selected, test[,8:11])
+```
+
+## TEST Model 0
+
+```{r}
+tree.classTest <-  predict(train_x.tree_cv, newdata = test_norm, type="raw")
+write.table(tree.classTest,file="FINAL_tree.classTest.txt", row.names=FALSE, col.names=FALSE)
+```
+
+## TEST Model 1
+
+```{r}
+bagg.classTest <-  predict(train_x.bagg_cv, newdata = test_norm, type="raw")
+write.table(bagg.classTest,file="FINAL_bagg.classTest.txt", row.names=FALSE, col.names=FALSE)
+```
+
+## TEST Model 2
+
+```{r}
+rf.classTest <-  predict(train_x.rf_cv, newdata = test_norm, type="raw")
+write.table(rf.classTest,file="FINAL_rf.classTest.txt", row.names=FALSE, col.names=FALSE)
+```
+
+## TEST Model 3
+
+```{r}
+gbm.classTest <-  predict(train_x.gbm, newdata = test_norm, type="raw")
+write.table(gbm.classTest,file="FINAL_gbm.classTest.txt", row.names=FALSE, col.names=FALSE)
+```
